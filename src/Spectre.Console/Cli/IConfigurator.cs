@@ -45,5 +45,11 @@ namespace Spectre.Console.Cli
         /// <param name="action">The command branch configurator.</param>
         void AddBranch<TSettings>(string name, Action<IConfigurator<TSettings>> action)
             where TSettings : CommandSettings;
+
+        /// <summary>
+        /// Adds a custom argument source.
+        /// </summary>
+        /// <param name="source">An argument source implementation.</param>
+        void AddArgumentSource(IArgumentSource source);
     }
 }

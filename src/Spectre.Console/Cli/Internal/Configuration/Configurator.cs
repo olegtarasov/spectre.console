@@ -59,6 +59,11 @@ namespace Spectre.Console.Cli
             Commands.Add(command);
         }
 
+        public void AddArgumentSource(IArgumentSource source)
+        {
+            Settings.ArgumentSources.Add(source);
+        }
+
         ICommandConfigurator IUnsafeConfigurator.AddCommand(string name, Type command)
         {
             var method = GetType().GetMethod("AddCommand");

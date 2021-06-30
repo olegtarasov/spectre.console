@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Spectre.Console.Cli
 {
@@ -12,6 +13,7 @@ namespace Spectre.Console.Cli
         public CaseSensitivity CaseSensitivity { get; set; }
         public bool PropagateExceptions { get; set; }
         public bool ValidateExamples { get; set; }
+        public List<IArgumentSource> ArgumentSources { get; }
         public bool StrictParsing { get; set; }
 
         public ParsingMode ParsingMode =>
@@ -21,6 +23,7 @@ namespace Spectre.Console.Cli
         {
             Registrar = new TypeRegistrar(registrar);
             CaseSensitivity = CaseSensitivity.All;
+            ArgumentSources = new List<IArgumentSource>();
         }
 
         public bool IsTrue(Func<CommandAppSettings, bool> func, string environmentVariableName)

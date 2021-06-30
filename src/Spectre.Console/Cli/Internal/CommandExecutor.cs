@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Xml.XPath;
 
 namespace Spectre.Console.Cli
 {
@@ -53,6 +54,31 @@ namespace Spectre.Console.Cli
             // Parse and map the model against the arguments.
             var parser = new CommandTreeParser(model, configuration.Settings);
             var parsedResult = parser.Parse(args);
+
+            // Get additional arguments from custom sources.
+            var (additionalArgs, processedKeys) = GetAdditionalArgs(configuration.Settings.ArgumentSources, parsedResult.Remaining.Parsed);
+            if (processedKeys.Length > 0)
+            {
+                var remaining = parsedResult.Remaining.Parsed
+                    .Where(x => !processedKeys.Contains(x.Key))
+                    .SelectMany(group => group, (group, value) => new { group.Key, value })
+                    .ToLookup(pair => pair.Key, pair => pair.value);
+                parsedResult = new CommandTreeParserResult(parsedResult.Tree, new RemainingArguments(remaining, parsedResult.Remaining.Raw));
+            }
+
+            if (additionalArgs.Length > 0)
+            {
+                var additionalParsed = additionalArgs.Select(x => parser.Parse(x)).ToArray();
+                var finalResult = additionalParsed[0].Tree;
+
+                for (int i = 1; i < additionalParsed.Length; i++)
+                {
+                    finalResult = MergeTrees(finalResult, additionalParsed[i].Tree, null);
+                }
+
+                parsedResult = new CommandTreeParserResult(MergeTrees(finalResult, parsedResult.Tree, null), parsedResult.Remaining);
+            }
+
             _registrar.RegisterInstance(typeof(CommandTreeParserResult), parsedResult);
 
             // Currently the root?
@@ -83,6 +109,71 @@ namespace Spectre.Console.Cli
                 // Execute the command tree.
                 return await Execute(leaf, parsedResult.Tree, context, resolver, configuration);
             }
+        }
+
+        private CommandTree? MergeTrees(CommandTree? left, CommandTree? right, CommandTree? parent)
+        {
+            if (left == null)
+            {
+                return right;
+            }
+
+            if (right == null)
+            {
+                return null;
+            }
+
+            if (left.Command.Name != right.Command.Name)
+            {
+                return right;
+            }
+
+            var result = new CommandTree(parent, left.Command);
+            result.Mapped.AddRange(left.Mapped);
+            result.Unmapped.AddRange(left.Unmapped);
+            foreach (var group in right.Mapped.GroupBy(x => x.Parameter.Id))
+            {
+                result.Mapped.RemoveAll(x => x.Parameter.Id == group.Key);
+                result.Mapped.AddRange(group);
+
+                result.Unmapped.RemoveAll(x => x.Id == group.Key);
+            }
+
+            if (right.Next != null)
+            {
+                result.Next = MergeTrees(left.Next, right.Next, result);
+            }
+
+            return result;
+        }
+        
+        private (string[][] Args, string[] ProcessedKeys) GetAdditionalArgs(List<IArgumentSource> sources, ILookup<string, string?> remainingArgs)
+        {
+            var result = new List<string[]>();
+            var processedKeys = new List<string>();
+            foreach (var grouping in remainingArgs)
+            {
+                var filteredSources = sources.Where(x => string.Equals(grouping.Key, x.ArgumentKey, StringComparison.OrdinalIgnoreCase)).ToArray();
+                if (filteredSources.Length > 0)
+                {
+                    processedKeys.Add(grouping.Key);
+                }
+
+                foreach (var source in filteredSources)
+                {
+                    foreach (var path in grouping)
+                    {
+                        if (string.IsNullOrEmpty(path))
+                        {
+                            continue;
+                        }
+
+                        result.Add(source.ProvideArguments(path));
+                    }
+                }
+            }
+
+            return (result.ToArray(), processedKeys.ToArray());
         }
 
         private static string ResolveApplicationVersion(IConfiguration configuration)

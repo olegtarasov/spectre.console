@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Spectre.Console.Cli
 {
     /// <summary>
@@ -50,5 +52,10 @@ namespace Spectre.Console.Cli
         /// Gets or sets a value indicating whether or not examples should be validated.
         /// </summary>
         bool ValidateExamples { get; set; }
+        
+        /// <summary>
+        /// Gets a list of additional argument sources.
+        /// </summary>
+        List<IArgumentSource> ArgumentSources { get; }
     }
 }

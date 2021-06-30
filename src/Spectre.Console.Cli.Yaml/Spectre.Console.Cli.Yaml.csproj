@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net5.0;netstandard2.0</TargetFrameworks>
+        <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+        <Description>A library that extends Spectre.Console.Cli with Yaml argument parser.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <AdditionalFiles Include="..\stylecop.json" Link="Properties/stylecop.json" />
+        <None Include="../../resources/gfx/small-logo.png" Pack="true" PackagePath="\" Link="Properties/small-logo.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Spectre.Console\Spectre.Console.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="YamlDotNet" Version="11.2.1" />
+    </ItemGroup>
+
+</Project>

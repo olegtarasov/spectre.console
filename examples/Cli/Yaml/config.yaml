@@ -1,0 +1,10 @@
+add:
+  FooBar:
+    package:
+      BuzzFuzz:
+        version:
+          - 2.0
+          -
+          - 3.0
+        number: 3
+        flag:
